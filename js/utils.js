@@ -3,15 +3,14 @@ const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
 const exec = require('child_process').exec
 
-function confirmDirs (dir, callback) {
+function confirmDirs (dir) {
   const dirp = dir || process.env.SNT_DATA_PATH
-  fs.stat(dirp, (err, stat) => {
-    if (err) {
-      fs.mkdirSync(dir)
-      fs.mkdirSync(`${dir}/backups`)
-    }
-    callback()
-  })
+  try {
+    fs.statSync(dirp)
+  } catch (err) {
+    fs.mkdirSync(dir)
+    fs.mkdirSync(`${dir}/backups`)
+  }
 }
 
 async function checkToken (req) {

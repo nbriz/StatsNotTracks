@@ -1,7 +1,5 @@
 const path = require('path')
 const express = require('express')
-const bodyParser = require('body-parser')
-const cookieParser = require('cookie-parser')
 const setup = (app, o) => {
   o = o || {}
 
@@ -39,21 +37,16 @@ const setup = (app, o) => {
     ? o.admin.token : 'sntAdminToken'
 
   const utils = require('./js/utils.js')
-  const clientLogger = require('./js/logger.js')
-  const restAPI = require('./js/rest-api.js')
+  utils.confirmDirs(process.env.SNT_DATA_PATH)
 
-  utils.confirmDirs(process.env.SNT_DATA_PATH, () => {
-    app.use(bodyParser.json())
-    app.use(cookieParser())
-    app.use(clientLogger)
-    if (o.admin) app.use(restAPI)
-    if (o.admin && o.admin.dashboard !== 'string') {
-      // serve default static directory for default dashboard
-      // NOTE: maybe this should be served regardless???
-      // ...so it can be used by custom dashbaord as well
-      app.use(express.static(`${process.env.SNT_ADMIN_GUI}/static`))
-    }
-  })
+  const clientLogger = require('./js/logger.js')
+  app.use(clientLogger)
+
+  if (o.admin) {
+    app.use(express.static(`${path.join(__dirname, 'client')}/static`))
+    const restAPI = require('./js/rest-api.js')
+    app.use(restAPI)
+  }
 }
 
 const live = (server, io) => {

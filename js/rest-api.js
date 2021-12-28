@@ -1,8 +1,13 @@
 const express = require('express')
 const router = express.Router()
+const cookieParser = require('cookie-parser')
+const bodyParser = require('body-parser')
 const utils = require('./utils.js')
 const db = require('./db-models')
 // const Op = db.Sequelize.Op
+
+router.use(bodyParser.json())
+router.use(cookieParser())
 
 // --------------------------------------------------------- LOGIN/OUT ---------
 // ~ . ~ . ~ . ~ . ~ . ~ . ~ . ~ . ~ . ~ . ~ . ~ . ~ . ~ . ~ . ~ . ~ . ~ . ~ . ~

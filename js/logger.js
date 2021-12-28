@@ -2,10 +2,13 @@ const fs = require('fs')
 const path = require('path')
 const express = require('express')
 const router = express.Router()
+const bodyParser = require('body-parser')
 const device = require('device')
 const bcrypt = require('bcryptjs')
 const utils = require('./utils.js')
 const db = require('./db-models')
+
+router.use(bodyParser.json())
 
 router.get('/stats-not-tracks.js', async (req, res) => {
   const sntp = path.join(__dirname, '../client/stats-not-tracks.js')
