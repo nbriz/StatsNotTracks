@@ -47,7 +47,7 @@ const setup = (app, o) => {
     app.use(cookieParser())
     app.use(clientLogger)
     if (o.admin) app.use(restAPI)
-    if (o.admin.dashboard !== 'string') {
+    if (o.admin && o.admin.dashboard !== 'string') {
       // serve default static directory for default dashboard
       // NOTE: maybe this should be served regardless???
       // ...so it can be used by custom dashbaord as well
