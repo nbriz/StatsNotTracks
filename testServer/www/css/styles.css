@@ -1,0 +1,54 @@
+* {
+  box-sizing: border-box;
+}
+
+body{
+  font-family: monospace;
+  background: #222;
+  color: #fff;
+  margin: 0;
+  padding: 0;
+  text-transform: uppercase;
+}
+
+section {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  animation: enter 1.5s ease-in-out 1;
+}
+
+h1 {
+  text-transform: uppercase;
+  font-size: 100px;
+  letter-spacing: 30px;
+  font-weight: 100;
+  margin: 0;
+}
+
+p {
+  font-size: 50px;
+  margin-top: 5px;
+}
+
+a {
+  color: #5252ff;
+}
+
+.email {
+  font-size: 6vw;
+}
+
+
+@keyframes enter {
+  0% {
+    transform: translate(0px, -50px);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(0px, 0px);
+    opacity: 1;
+  }
+}

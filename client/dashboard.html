@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Analytics Dashboard</title>
+    <link rel="stylesheet" href="/snt-styles.css">
+  </head>
+  <body>
+
+    <section id="wrap">
+      <header>
+        <span>
+          StatsNotTracks - Analytics
+          <span id="info">(i)</span>
+        </span>
+        <span id="stats">
+          <span id="visits">0</span>
+          <span id="views">0</span>
+          <span id="time">0</span>
+          <span id="live">0</span>
+        </span>
+        <div><button id="logout">logout</button></div>
+      </header>
+
+      <nav>
+        <span>
+          data.from <input type="date" id="time-range-from">
+          to <input type="date" id="time-range-to">
+          <div style="height: 8px;"></div>
+          gui.depth <input type="range" id="parallax-slider" value="0">
+          <div style="height: 15px;"></div>
+        </span>
+      </nav>
+
+      <section id="chart">
+        <canvas></canvas>
+      </section>
+
+      <section id="analytics">
+        <div>
+          <div class="stat-title">pages</div>
+          <div id="pages"></div>
+        </div>
+        <div>
+          <div class="stat-title">referrals</div>
+          <div id="referrals"></div>
+        </div>
+        <div>
+          <div class="stat-title">devices</div>
+          <div id="devices"></div>
+          <div class="stat-title">systems</div>
+          <div id="systems"></div>
+          <div class="stat-title">clients</div>
+          <div id="clients"></div>
+        </div>
+        <div>
+          <div class="stat-title">locations</div>
+          <div id="locations"></div>
+        </div>
+      </section>
+    </section>
+
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/snt-libs/utils.js"></script>
+    <script src="/snt-libs/chart.min.js"></script>
+    <script>
+      window.$ = (sel) => {
+        const ez = [...document.querySelectorAll(sel)]
+          .map(e => { e.on = e.addEventListener; return e })
+        if (ez.length === 1) return ez[0]
+        else return ez
+      }
+
+      function createRow (text, val, max) {
+        const row = document.createElement('div')
+        row.className = 'row'
+        const back = document.createElement('div')
+        back.className = 'back'
+        back.innerHTML = `
+          <div>${text}</div>
+          <div>${SNT.abrevNum(val)}</div>`
+        row.appendChild(back)
+        const front = document.createElement('div')
+        front.className = 'front'
+        front.innerHTML = `
+          <div class="bar">${text}</div>
+          <div>${SNT.abrevNum(val)}</div>`
+        row.appendChild(front)
+        setTimeout(() => {
+          front.querySelector('.bar').style.width = val / max * 100 + '%'
+        }, 500)
+        return row
+      }
+
+      async function setup () {
+        // setup initial time frame (past month)
+        const t = new Date(Date.now() + SNT.day)
+        const y = new Date(t - SNT.month)
+        $('#time-range-from').value = SNT.date2str(y)
+        $('#time-range-to').value = SNT.date2str(t)
+
+        // setup event listeners
+        $('#logout').on('click', () => { SNT.logout(() => location.reload()) })
+        $('#time-range-from').on('change', update)
+        $('#time-range-to').on('change', update)
+
+        if (typeof window.io === 'function') {
+          window.io().on('snt-connection', (num) => {
+            // -1, dont't include this connection
+            $('#live').textContent = num - 1
+          })
+        }
+
+        const height = $('header').offsetHeight + $('nav').offsetHeight
+        $('#chart').style.height = `calc(35% - ${height / 2}px)`
+        $('#analytics').style.height = `calc(65% - ${height / 2}px)`
+
+        // run initial update
+        update()
+
+        // setup 3D parallax
+        SNT.setupParallaxGUI({
+          container: '#wrap',
+          rangeEle: '#parallax-slider',
+          items: [
+            { el: 'header', z: 75 },
+            { el: 'nav', z: 50 },
+            { el: '#chart', z: 15 },
+            { el: '#analytics', z: 50 }
+          ]
+        })
+      }
+
+      async function update () {
+        const json = await SNT.getData({
+          start: SNT.str2timestamp($('#time-range-from').value),
+          end: SNT.str2timestamp($('#time-range-to').value)
+        })
+        // dict = json
+
+        $('#visits').textContent = SNT.abrevNum(json.visitors.length)
+
+        const avgTimes = SNT.avgTimes(json.dict)
+        $('#time').textContent = SNT.ms2tc(avgTimes.average)
+
+        // console.log(json);
+
+        const views = SNT.getViews(json.dict)
+        $('#views').textContent = SNT.abrevNum(views.total)
+
+        // console.log(views);
+
+        const canvas = $('#chart > canvas')
+        const range = {
+          from: $('#time-range-from').value,
+          to: $('#time-range-to').value
+        }
+        SNT.chartViews(canvas, range, views.cal)
+
+        let stats = ['pages', 'referrals']
+        stats.forEach(s => {
+          $(`#${s}`).innerHTML = ''
+          const max = SNT.sumStat(views[s])
+          SNT.order(views[s]).forEach(item => {
+            const row = createRow(item.key, views[s][item.key], max)
+            $(`#${s}`).appendChild(row)
+          })
+        })
+
+        const tallies = {
+          devices: SNT.tallyStats(views.devices),
+          systems: SNT.tallyStats(views.systems),
+          clients: SNT.tallyStats(views.clients)
+        }
+        stats = ['devices', 'systems', 'clients']
+        stats.forEach(s => {
+          $(`#${s}`).innerHTML = ''
+          const max = SNT.sumStat(tallies[s])
+          SNT.order(tallies[s]).forEach(item => {
+            const row = createRow(item.key, tallies[s][item.key], max)
+            $(`#${s}`).appendChild(row)
+          })
+        })
+
+        // locations
+        $('#locations').innerHTML = ''
+        const geo = SNT.parseGeo(json.locations)
+        const max = SNT.sumStat(geo.countries)
+        SNT.order(geo.countries).forEach(item => {
+          const row = createRow(item.key, geo.countries[item.key], max)
+          $('#locations').appendChild(row)
+        })
+      }
+
+      window.addEventListener('load', setup)
+    </script>
+
+  </body>
+</html>

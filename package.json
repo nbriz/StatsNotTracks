@@ -1,0 +1,33 @@
+{
+  "name": "stats-not-tracks",
+  "version": "1.0.0",
+  "description": "privacy focused web analytics middleware for express.js",
+  "main": "index.js",
+  "scripts": {
+    "server": "node testServer",
+    "hashpw": "node js/hashpw.js",
+    "build": "terser client/stats-not-tracks.js -cm -o client/stats-not-tracks.min.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nbriz/StatsNotTracks.git"
+  },
+  "author": "Nick Briz <nickbriz@protonmail.com>",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/nbriz/StatsNotTracks/issues"
+  },
+  "homepage": "https://github.com/nbriz/StatsNotTracks#readme",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.19.0",
+    "cookie-parser": "^1.4.6",
+    "device": "^0.3.12",
+    "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
+    "sequelize": "^6.12.0-alpha.1",
+    "socket.io": "^4.4.0",
+    "sqlite3": "^5.0.2",
+    "terser": "^5.10.0"
+  }
+}

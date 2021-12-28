@@ -1,0 +1,249 @@
+@font-face {
+    font-family: 'fira-mono-regular';
+    src: url('snt-fonts/FiraMono-Regular.woff2') format('woff2'),
+         url('snt-fonts/FiraMono-Regular.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+:root {
+  --black: #000000;
+  --grey: #272527;
+  --light-grey: #7E7E7F;
+  --white: #e7e7f0;
+  --purple: #7272D6;
+  --green: #82E22E;
+  --blue: #66D9CF;
+  --red: #FC7575;
+  --yellow: #E6DB6F;
+  --red: #FC7575;
+  --orange: #E96926;
+  --anim: transform 1s cubic-bezier(0.165, 0.84, 0.44, 1),
+    opacity 1s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: var(--black);
+  color: var(--white);
+  font-family: 'fira-mono-regular', monospace;
+  overflow: hidden;
+}
+
+a {
+  color: var(--yellow);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+input {
+  border: 1px solid var(--white);
+  background-color: var(--black);
+  color: var(--white);
+  padding: 5px;
+}
+
+button {
+  border: 1px solid var(--white);
+  background-color: var(--white);
+  color: var(--black);
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+button:hover {
+  border: 1px solid var(--yellow);
+  background-color: var(--yellow);
+}
+
+input[type=date]:hover {
+  cursor: pointer;
+  border-color: var(--yellow);
+  color: var(--yellow);
+}
+
+input[type=range] {
+  -webkit-appearance: none;
+  background-color: var(--white);
+  height: 2px;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+input[type=range]:hover {
+  background-color: var(--yellow)
+}
+
+input[type=range]::-webkit-slider-thumb {
+  border: 0;
+  background-color: var(--yellow)
+}
+input[type=range]::-moz-range-thumb {
+  border: 0;
+  background-color: var(--yellow);
+}
+input[type=range]::-ms-thumb {
+  border: 0;
+  background-color: var(--yellow);
+}
+
+.wrap {
+  height: 100vh;
+}
+
+.wrap > div {
+  max-width: 700px;
+}
+
+.center-flex {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.stat-title {
+  text-align: center;
+  padding-bottom: 5px;
+}
+
+/*  DASHBOARD */
+
+#wrap {
+  width: 100vw;
+  height: 100vh;
+}
+
+header, nav, #stats {
+  display: flex;
+  justify-content: space-between;
+}
+
+header {
+  padding: 20px;
+}
+
+nav {
+  padding: 0px 20px;
+}
+
+#parallax-slider {
+  width: 282px;
+}
+
+header > span {
+  font-size: 22px;
+}
+
+header > span:nth-child(1) {
+  align-self: center;
+  border-bottom: 1px solid var(--white);
+  padding-bottom: 8px;
+}
+
+#info {
+  color: var(--yellow);
+  cursor: pointer;
+}
+
+#stats {
+  border: 1px solid var(--white);
+  padding: 18px 8px 10px 8px;
+}
+
+#stats > span {
+  margin: 0 24px;
+  text-align: center;
+}
+
+#visits::before {
+  content: "visits";
+  font-size: 12px;
+  display: block;
+  transform: translate(0px, -8px);
+}
+
+#views::before {
+  content: "page.views";
+  font-size: 12px;
+  display: block;
+  transform: translate(0px, -8px);
+}
+
+#time::before {
+  content: "avg.time";
+  font-size: 12px;
+  display: block;
+  transform: translate(0px, -8px);
+}
+
+#live::before {
+  content: "live";
+  font-size: 12px;
+  display: block;
+  transform: translate(0px, -8px);
+}
+
+#analytics {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-gap: 20px;
+  margin: 10px;
+  padding-bottom: 10vh;
+  /* overflow-y: scroll; */
+}
+
+#analytics > div {
+  overflow-y: scroll;
+}
+
+.row {
+  display: grid;
+  margin-bottom: 1px;
+  cursor: pointer;
+}
+
+.row > * {
+  grid-row: 1;
+  grid-column: 1;
+}
+
+.row > .back {
+  display: flex;
+  justify-content: space-between;
+}
+
+.row > .front {
+  display: flex;
+  justify-content: space-between;
+}
+
+.row > .front > .bar {
+  color: var(--black);
+  background-color: var(--white);
+  overflow: hidden;
+  white-space: nowrap;
+  width: 0;
+  transition: width 0.5s;
+}
+
+.row:hover > .front > .bar {
+  /* background-color: var(--yellow); */
+  background-color: transparent;
+  color: var(--black);
+}
+.row:hover > .back {
+  background-color: var(--yellow);
+  color: var(--black);
+}
+.row:hover > .front {
+  /* color: var(--yellow); */
+  color: var(--black);
+}
