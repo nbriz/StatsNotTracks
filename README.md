@@ -32,10 +32,10 @@ As it turns out, recording web analytics without compromising privacy can be pre
 npm install git+https://github.com/nbriz/StatsNotTracks.git
 ```
 
-Then on the server side add the following:
+Then on the server side add the following before defining any of the other routes u're recording analytics for:
 ```js
 // assuming "app" is an instance of an express() app
-require('StatsNotTracks').setup(app)
+require('stats-not-tracks').setup(app)
 ```
 
 Then add the following to any pages u want to record stats for:

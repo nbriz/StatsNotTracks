@@ -3,6 +3,8 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const setup = (app, o) => {
+  o = o || {}
+
   if (o.debug) process.env.SNT_DEBUG = true
 
   // where are we storing the data?
