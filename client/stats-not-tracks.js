@@ -19,7 +19,11 @@ window.SNT = {
   },
 
   dataObj: (action, payload) => {
-    const viewport = { width: window.innerWidth, height: window.innerHeight }
+    const viewport = {
+      width: window.innerWidth,
+      height: window.innerHeight,
+      query: window.location.search
+    }
     return {
       action: action,
       referrer: document.referrer,
