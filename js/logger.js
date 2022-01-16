@@ -10,15 +10,25 @@ const db = require('./db-models')
 
 router.use(bodyParser.json())
 
+function combineLibs (sntp, siop) {
+  const snt = fs.readFileSync(sntp, 'utf8')
+  const sio = fs.readFileSync(siop, 'utf8')
+  const lib = sio + '\n' + snt
+  return lib
+}
+
 router.get('/stats-not-tracks.js', async (req, res) => {
   const sntp = path.join(__dirname, '../client/stats-not-tracks.js')
   const siop = path.join(__dirname, '../node_modules/socket.io/client-dist/socket.io.js')
-  if (process.env.SNT_LIVE_STATS) {
-    const snt = fs.readFileSync(sntp, 'utf8')
-    const sio = fs.readFileSync(siop, 'utf8')
-    const lib = sio + '\n' + snt
-    res.send(lib)
-  } else res.sendFile(sntp)
+  if (process.env.SNT_LIVE_STATS) res.send(combineLibs(sntp, siop))
+  else res.sendFile(sntp)
+})
+
+router.get('/stats-not-tracks.min.js', async (req, res) => {
+  const sntp = path.join(__dirname, '../client/stats-not-tracks.min.js')
+  const siop = path.join(__dirname, '../node_modules/socket.io/client-dist/socket.io.js')
+  if (process.env.SNT_LIVE_STATS) res.send(combineLibs(sntp, siop))
+  else res.sendFile(sntp)
 })
 
 router.post('/snt-api/hit', async (req, res) => {

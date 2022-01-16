@@ -12,10 +12,21 @@
         <span>
           StatsNotTracks - Analytics
           <span id="info">(i)</span>
+          <span id="hidden-info" style="display:none">
+            <p>
+              privacy focused web analytics. records web site statistics w/out compromising user privacy. no tracking && no sharing data w/big tech. more info on <a href="https://github.com/nbriz/StatsNotTracks" target="_blank">GitHub</a>
+            </p>
+            <p>
+              a <i>visit</i> is a unique visitor (anonymized IP address + user agent string); a <i>page.view</i> is anytime a visitor fires a page-load action or a page-visible action (switched back to the tab); <i>live</i> is number of current users on the site.
+            </p>
+            <p>
+              numbers next to <b>pages</b> && <b>referrals</b> are in <i>page.views</i>; numbers next to <b>devices</b>, <b>systems</b>, <b>clients</b> && <b>locations</b> are in <i>visits</i>
+            </p>
+          </span>
         </span>
         <span id="stats">
-          <span id="visits">0</span>
           <span id="views">0</span>
+          <span id="visits">0</span>
           <span id="time">0</span>
           <span id="live">0</span>
         </span>
@@ -29,6 +40,10 @@
           <div style="height: 8px;"></div>
           gui.depth <input type="range" id="parallax-slider" value="0">
           <div style="height: 15px;"></div>
+        </span>
+        <span>
+          <div class="filter"></div>
+          <button>view details</button>
         </span>
       </nav>
 
@@ -60,38 +75,70 @@
       </section>
     </section>
 
+    <snt-modal zIndex="1000"></snt-modal>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="/snt-libs/utils.js"></script>
     <script src="/snt-libs/chart.min.js"></script>
+    <script src="/snt-libs/snt-row.js"></script>
+    <script src="/snt-libs/snt-modal.js"></script>
     <script>
-      window.$ = (sel) => {
-        const ez = [...document.querySelectorAll(sel)]
-          .map(e => { e.on = e.addEventListener; return e })
-        if (ez.length === 1) return ez[0]
-        else return ez
+      const queryCache = { query: null, data: null }
+
+      function createRows (data, parent) {
+        if (parent) $(parent).innerHTML = ''
+        const max = SNT.sumStat(data)
+        const arr = []
+        SNT.order(data).forEach(item => {
+          const row = createRow(item.key, item.val, max)
+          if (parent) $(parent).appendChild(row)
+          else arr.push(row)
+        })
+        if (parent) return $(parent).children
+        else return arr
       }
 
-      function createRow (text, val, max) {
-        const row = document.createElement('div')
-        row.className = 'row'
-        const back = document.createElement('div')
-        back.className = 'back'
-        back.innerHTML = `
-          <div>${text}</div>
-          <div>${SNT.abrevNum(val)}</div>`
-        row.appendChild(back)
-        const front = document.createElement('div')
-        front.className = 'front'
-        front.innerHTML = `
-          <div class="bar">${text}</div>
-          <div>${SNT.abrevNum(val)}</div>`
-        row.appendChild(front)
-        setTimeout(() => {
-          front.querySelector('.bar').style.width = val / max * 100 + '%'
-        }, 500)
+      function createRow (txt, val, max) {
+        const range = {
+          start: SNT.str2timestamp($('#time-range-from').value),
+          end: SNT.str2timestamp($('#time-range-to').value)
+        }
+        const row = document.createElement('snt-row')
+        row.setAttribute('txt', txt)
+        row.setAttribute('val', val)
+        row.setAttribute('max', max)
+        row.addEventListener('click', async (e) => rowClick(e, txt, range))
         return row
       }
+
+      async function rowClick (e, text, r) {
+        const pid = (t) => t.parentNode.id ? t.parentNode.id : pid(t.parentNode)
+        const id = pid(e.target)
+
+        let query = '/snt-api/data/'
+        // ... route param + range
+        if (id === 'pages' || id === 'referrals') {
+          query += `hits?start=${r.start}&end=${r.end}`
+        } else if (id === 'locations') {
+          query += `locations?start=${r.start}&end=${r.end}`
+        } else {
+          query += `visitors?start=${r.start}&end=${r.end}`
+        }
+        // ... additional query params
+        if (id === 'pages') query += `&path=${text}`
+        else if (id === 'referrals') query += `&referrer=${text}`
+        else if (id === 'devices') query += `&device=${text}`
+        else if (id === 'systems') query += `&os=${text}`
+        else if (id === 'clients') query += `&client=${text}`
+        else if (id === 'locations') query += `&country=${text}`
+
+        // update view
+        update(query, id, text)
+      }
+
+      // -----------------------------------------------------------------------
+      // --------------------------------------------- SETUP + UPDATE ----------
+      // -----------------------------------------------------------------------
 
       async function setup () {
         // setup initial time frame (past month)
@@ -99,11 +146,6 @@
         const y = new Date(t - SNT.month)
         $('#time-range-from').value = SNT.date2str(y)
         $('#time-range-to').value = SNT.date2str(t)
-
-        // setup event listeners
-        $('#logout').on('click', () => { SNT.logout(() => location.reload()) })
-        $('#time-range-from').on('change', update)
-        $('#time-range-to').on('change', update)
 
         if (typeof window.io === 'function') {
           window.io().on('snt-connection', (num) => {
@@ -117,7 +159,32 @@
         $('#analytics').style.height = `calc(65% - ${height / 2}px)`
 
         // run initial update
-        update()
+        function genQuery () {
+          const start = SNT.str2timestamp($('#time-range-from').value)
+          const end = SNT.str2timestamp($('#time-range-to').value)
+          const query = `/snt-api/data/hits?start=${start}&end=${end}`
+          return query
+        }
+        update(genQuery())
+
+        // clear filter
+        $('.filter').addEventListener('click', () => {
+          SNT.loading(true)
+          $('nav > span:nth-child(2)').style.display = 'none'
+          setTimeout(() => update(genQuery()), 100)
+        })
+
+        // setup event listeners
+        $('#logout').on('click', () => { SNT.logout(() => location.reload()) })
+        $('#time-range-from').on('change', () => update(genQuery()))
+        $('#time-range-to').on('change', () => update(genQuery()))
+
+        // info model
+        $('#info').addEventListener('click', () => {
+          $('snt-modal').update({
+            title: 'StatsNotTracks - info', html: $('#hidden-info').innerHTML
+          })
+        })
 
         // setup 3D parallax
         SNT.setupParallaxGUI({
@@ -132,25 +199,44 @@
         })
       }
 
-      async function update () {
-        const json = await SNT.getData({
-          start: SNT.str2timestamp($('#time-range-from').value),
-          end: SNT.str2timestamp($('#time-range-to').value)
-        })
-        // dict = json
+      async function update (query, id, text) {
+        SNT.loading(true)
+        let data
+        if (!id && !text) {
+          if (query === queryCache.query) {
+            data = queryCache.data
+          } else {
+            queryCache.query = query
+            data = await SNT.getData(query)
+            queryCache.data = data
+          }
+        } else data = await SNT.getData(query)
 
-        $('#visits').textContent = SNT.abrevNum(json.visitors.length)
+        // UPDATE MODAL DETAILS
+        if (id && text) {
+          $('nav > span:nth-child(2)').style.display = 'flex'
+          $('.filter').textContent = `[${id.toUpperCase()}] ${text}`
+        }
+        if (id === 'pages') {
+          $('.filter+button').style.display = 'block'
+          $('.filter+button').addEventListener('click', () => {
+            $('snt-modal').update({ type: 'page-actions', data: data.dict })
+          })
+        } else if (id === 'locations') {
+          $('.filter+button').style.display = 'block'
+          $('.filter+button').addEventListener('click', () => {
+            $('snt-modal').update({ type: 'locations', data: data.dict })
+          })
+        } else $('.filter+button').style.display = 'none'
 
-        const avgTimes = SNT.avgTimes(json.dict)
+        // UPDATE HEADER DATA
+        $('#visits').textContent = SNT.abrevNum(data.hashes.length)
+        const avgTimes = SNT.avgTimes(data.dict)
         $('#time').textContent = SNT.ms2tc(avgTimes.average)
-
-        // console.log(json);
-
-        const views = SNT.getViews(json.dict)
+        const views = SNT.getViews(data.dict)
         $('#views').textContent = SNT.abrevNum(views.total)
 
-        // console.log(views);
-
+        // CREATE GRAPH
         const canvas = $('#chart > canvas')
         const range = {
           from: $('#time-range-from').value,
@@ -158,39 +244,19 @@
         }
         SNT.chartViews(canvas, range, views.cal)
 
-        let stats = ['pages', 'referrals']
-        stats.forEach(s => {
-          $(`#${s}`).innerHTML = ''
-          const max = SNT.sumStat(views[s])
-          SNT.order(views[s]).forEach(item => {
-            const row = createRow(item.key, views[s][item.key], max)
-            $(`#${s}`).appendChild(row)
-          })
-        })
+        console.log(views);
 
-        const tallies = {
-          devices: SNT.tallyStats(views.devices),
-          systems: SNT.tallyStats(views.systems),
-          clients: SNT.tallyStats(views.clients)
-        }
-        stats = ['devices', 'systems', 'clients']
-        stats.forEach(s => {
-          $(`#${s}`).innerHTML = ''
-          const max = SNT.sumStat(tallies[s])
-          SNT.order(tallies[s]).forEach(item => {
-            const row = createRow(item.key, tallies[s][item.key], max)
-            $(`#${s}`).appendChild(row)
-          })
-        })
-
-        // locations
-        $('#locations').innerHTML = ''
-        const geo = SNT.parseGeo(json.locations)
-        const max = SNT.sumStat(geo.countries)
-        SNT.order(geo.countries).forEach(item => {
-          const row = createRow(item.key, geo.countries[item.key], max)
-          $('#locations').appendChild(row)
-        })
+        // CREATE DATA ROWS
+        const stats = [
+          { parent: '#pages', data: views.pages },
+          { parent: '#referrals', data: views.referrals },
+          { parent: '#devices', data: SNT.tallyStats(views.devices) },
+          { parent: '#systems', data: SNT.tallyStats(views.systems) },
+          { parent: '#clients', data: SNT.tallyStats(views.clients) },
+          { parent: '#locations', data: SNT.tallyGeo(data.locations) }
+        ]
+        stats.forEach(s => createRows(s.data, s.parent))
+        setTimeout(() => SNT.loading(false), 200)
       }
 
       window.addEventListener('load', setup)

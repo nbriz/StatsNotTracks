@@ -1,4 +1,11 @@
 /* global Chart */
+window.$ = (sel) => {
+  const ez = [...document.querySelectorAll(sel)]
+    .map(e => { e.on = e.addEventListener; return e })
+  if (ez.length === 1) return ez[0]
+  else return ez
+}
+
 window.SNT = {
   _fetch: async (query, opts, callback) => {
     if (!callback) {
@@ -57,10 +64,9 @@ window.SNT = {
     return window.SNT._fetch(query, opts, callback)
   },
 
-  getData: async (opts, callback) => {
-    const o = opts || { start: 0, end: Date.now() }
-    const query = `/snt-api/data?start=${o.start}&end=${o.end}`
+  getData: async (query, callback) => {
     const data = await window.SNT._fetch(query, null, callback)
+    // create visitor dictionary
     data.dict = data.visitors.reduce((a, x) => ({ ...a, [x.hash]: x }), {})
     data.locations.forEach(l => { data.dict[l.hash].geo = l })
     data.hits.forEach(h => {
@@ -87,65 +93,44 @@ window.SNT = {
     const clients = {}
 
     const addDevice = (d, m) => {
-      if (!devices[d]) {
-        devices[d] = {}
-        if (!devices[d][m]) {
-          devices[d][m] = 1
-        } else {
-          devices[d][m]++
-        }
-      }
+      if (!devices[d]) devices[d] = {}
+      if (!devices[d][m]) devices[d][m] = 1
+      else devices[d][m]++
     }
 
     const addOS = (os) => {
       os = os.split('.')
       const t = os[0]
       const v = os[1]
-      if (!systems[t]) {
-        systems[t] = {}
-        if (!systems[t][v]) {
-          systems[t][v] = 1
-        } else {
-          systems[t][v]++
-        }
-      }
+      if (!systems[t]) systems[t] = {}
+      if (!systems[t][v]) systems[t][v] = 1
+      else systems[t][v]++
     }
 
     const addClient = (client) => {
       client = client.split('.')
       const t = client[0]
       const v = client[1]
-      if (!clients[t]) {
-        clients[t] = {}
-        if (!clients[t][v]) {
-          clients[t][v] = 1
-        } else {
-          clients[t][v]++
-        }
-      }
+      if (!clients[t]) clients[t] = {}
+      if (!clients[t][v]) clients[t][v] = 1
+      else clients[t][v]++
     }
 
     for (const visitor in visitorDict) {
       visitorDict[visitor].hits.forEach(h => {
+        const showAct = (h.action === 'load' || h.action === 'visible')
         const dstr = window.SNT.timestamp2str(h.timestamp)
         if (!pages[h.path]) pages[h.path] = 0
         if (!cal[dstr]) cal[dstr] = 0
-        if (h.action === 'load' || h.action === 'visible') {
+        if (showAct) {
           pages[h.path]++
           cal[dstr]++
         }
         // referrals
-        if (h.referrer && !referrals[h.referrer]) {
-          referrals[h.referrer] = { count: 1, lock: true }
-        } else if (h.referrer && referrals[h.referrer]) {
-          if (!referrals[h.referrer].lock) {
-            referrals[h.referrer].count++
-            referrals[h.referrer].lock = true
-          }
-          if (h.action === 'unload') {
-            referrals[h.referrer].lock = false
-          }
-        }
+        // const ref = window.SNT.urlTrim(h.referrer)
+        const r = h.referrer
+        if (showAct && r && !referrals[r]) referrals[r] = 1
+        else if (showAct && r && referrals[r]) referrals[r]++
       })
       // devices, systems, clients
       addDevice(visitorDict[visitor].device, visitorDict[visitor].model)
@@ -153,14 +138,10 @@ window.SNT = {
       addClient(visitorDict[visitor].client)
     }
 
-    // clean up data
-    Object.keys(referrals)
-      .forEach(ref => { referrals[ref] = referrals[ref].count })
-
     // count total views
     const views = []
     for (const page in pages) { views.push(pages[page]) }
-    const total = views.reduce((a, b) => a + b)
+    const total = views.length > 0 ? views.reduce((a, b) => a + b) : 0
 
     return { pages, cal, total, referrals, devices, systems, clients }
   },
@@ -177,6 +158,7 @@ window.SNT = {
         pages[h.path].push({ action: h.action, time: h.timestamp })
       })
     }
+
     for (const page in pages) {
       const sessions = []
 
@@ -193,46 +175,15 @@ window.SNT = {
       let avg = sessions
         .map(s => s.end - s.start)
         .filter(t => t > 0)
-      avg = avg.length === 0
-        ? 0 : avg.reduce((a, b) => a + b) / avg.length
+      avg = avg.length === 0 ? 0 : avg.reduce((a, b) => a + b) / avg.length
 
-      pages[page] = avg
+      if (avg === 0) delete pages[page]
+      else pages[page] = avg
     }
 
-    const avgs = []
-    for (const page in pages) { avgs.push(pages[page]) }
-    const average = avgs.reduce((a, b) => a + b) / avgs.length
-    return { pages, average }
-  },
-
-  /*
-    const json = await SNT.getData()
-    const geos = SNT.parseGeo(json.locations)
-  */
-
-  parseGeo: (locations) => {
-    const geo = { countries: {}, tallies: {}, dict: {} }
-
-    locations.filter(g => g.status !== 'fail').forEach(g => {
-      // update countries count
-      if (!geo.countries[g.country]) geo.countries[g.country] = 0
-      geo.countries[g.country]++
-      // update dict
-      if (!geo.dict[g.country]) geo.dict[g.country] = {}
-      // update dict + tallies
-      const ignore = ['hash', 'status', 'message']
-      for (const key in g) {
-        if (ignore.indexOf(key) < 0) {
-          if (!geo.tallies[key]) geo.tallies[key] = 1
-          else geo.tallies[key]++
-          // ...
-          if (!geo.dict[g.country][key]) geo.dict[g.country][key] = 1
-          else geo.dict[g.country][key]++
-        }
-      }
-    })
-
-    return geo
+    const avgs = Object.keys(pages).map(p => pages[p])
+    const a = avgs.length > 0 ? avgs.reduce((a, b) => a + b) / avgs.length : 0
+    return { pages, average: a }
   },
 
   // -----------------------------
@@ -305,6 +256,21 @@ window.SNT = {
   // PARALLAX GUI
   // -----------------------------
 
+  /*
+
+    SNT.setupParallaxGUI({
+      container: '#wrap',
+      rangeEle: '#parallax-slider',
+      items: [
+        { el: 'header', z: 75 },
+        { el: 'nav', z: 50 },
+        { el: '#chart', z: 15 },
+        { el: '#analytics', z: 50 }
+      ]
+    })
+
+  */
+
   setupParallaxGUI: (opts) => {
     window.SNT._parallax = opts
     const s = document.createElement('style')
@@ -365,6 +331,66 @@ window.SNT = {
   },
 
   // -----------------------------
+  // LOADING SCREEN
+  // -----------------------------
+
+  loading: (status, opts) => {
+    opts = opts || {}
+    const loader = document.querySelector('#snt-loader')
+
+    if (!status && loader) {
+      loader.style.display = 'none'
+      return
+    }
+
+    const init = () => {
+      const loader = document.createElement('div')
+      loader.setAttribute('id', 'snt-loader')
+      const dots = document.createElement('div')
+      dots.textContent = 'loading'
+      loader.appendChild(dots)
+      const css = document.createElement('style')
+      css.innerHTML = `
+        #snt-loader {
+          display: grid;
+          place-items: center;
+          background: ${opts.background || '#000b'};
+          color: ${opts.color || '#fff'};
+          position: fixed;
+          top: 0;
+          left: 0;
+          z-index: ${opts.zIndex || 10000};
+          width: 100vw;
+          height: 100vh;
+        }
+
+        @keyframes snt-loading {
+          0% { content: ""; }
+          25% { content: "."; }
+          50% { content: ".."; }
+          75% { content: "..."; }
+          100% { content: ""; }
+        }
+
+        #snt-loader > div:before {
+          content: "";
+          animation: snt-loading 2s infinite;
+        }
+
+        #snt-loader > div:after {
+          content: "";
+          animation: snt-loading 2s infinite;
+        }
+      `
+      loader.appendChild(css)
+      document.body.appendChild(loader)
+    }
+
+    if (!loader) init()
+    else loader.style.display = 'grid'
+  },
+
+  // -----------------------------
   // MISC UTILS
   // -----------------------------
 
@@ -386,6 +412,17 @@ window.SNT = {
       })
     })
     return tally
+  },
+
+  tallyGeo: (locations, by) => {
+    const geo = {}
+    by = by || 'country'
+    locations.filter(g => g.status !== 'fail').forEach(g => {
+      const key = g[by]
+      if (!geo[key]) geo[key] = 1
+      else if (geo[key]) geo[key]++
+    })
+    return geo
   },
 
   maxStat: (obj) => {
@@ -429,10 +466,10 @@ window.SNT = {
     let hours = Math.floor(sec / 3600)
     let minutes = Math.floor((sec - (hours * 3600)) / 60)
     let seconds = sec - (hours * 3600) - (minutes * 60)
+    seconds = Math.round(seconds)
     if (hours < 10) { hours = '0' + hours }
     if (minutes < 10) { minutes = '0' + minutes }
     if (seconds < 10) { seconds = '0' + seconds }
-    seconds = Math.round(seconds)
     return `${hours}:${minutes}:${seconds}`
   },
 
@@ -451,5 +488,12 @@ window.SNT = {
   map: (value, sourceMin, sourceMax, destMin, destMax) => {
     const norm = window.SNT.norm(value, sourceMin, sourceMax)
     return window.SNT.lerp(norm, destMin, destMax)
+  },
+
+  urlTrim: (s) => {
+    if (s === '') s = '[DIRECT-REQUEST]'
+    if (s[s.length - 1] === '/') s = s.slice(0, -1)
+    if (s.includes('://')) s = s.split('://')[1]
+    return s
   }
 }

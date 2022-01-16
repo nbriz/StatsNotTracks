@@ -134,6 +134,28 @@ nav {
   padding: 0px 20px;
 }
 
+nav > span:nth-child(2) {
+  display: none;
+  flex-direction: column;
+  align-items: end;
+}
+
+nav .filter {
+  margin-bottom: 10px;
+}
+
+nav .filter:hover {
+  color: var(--red);
+  cursor: pointer;
+}
+
+nav .filter:after {
+  content: ' (x)';
+  color: var(--red);
+  cursor: pointer;
+}
+
+
 #parallax-slider {
   width: 282px;
 }
@@ -202,48 +224,4 @@ header > span:nth-child(1) {
 
 #analytics > div {
   overflow-y: scroll;
-}
-
-.row {
-  display: grid;
-  margin-bottom: 1px;
-  cursor: pointer;
-}
-
-.row > * {
-  grid-row: 1;
-  grid-column: 1;
-}
-
-.row > .back {
-  display: flex;
-  justify-content: space-between;
-}
-
-.row > .front {
-  display: flex;
-  justify-content: space-between;
-}
-
-.row > .front > .bar {
-  color: var(--black);
-  background-color: var(--white);
-  overflow: hidden;
-  white-space: nowrap;
-  width: 0;
-  transition: width 0.5s;
-}
-
-.row:hover > .front > .bar {
-  /* background-color: var(--yellow); */
-  background-color: transparent;
-  color: var(--black);
-}
-.row:hover > .back {
-  background-color: var(--yellow);
-  color: var(--black);
-}
-.row:hover > .front {
-  /* color: var(--yellow); */
-  color: var(--black);
 }

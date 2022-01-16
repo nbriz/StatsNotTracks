@@ -32,9 +32,9 @@ async function createToken (req) {
   const message = 'access granted'
   const userData = { data: req.body.password }
   const token = jwt.sign(userData, process.env.SNT_JWT_SECRET)
-  const oneDay = 24 * 60 * 60 * 1000
+  const ttl = Number(process.env.SNT_JWT_COOKIE_TTL)
   const options = {
-    maxAge: oneDay, secure: true, sameSite: true, httpOnly: true
+    maxAge: ttl, secure: true, sameSite: true, httpOnly: true
   }
   return { token, options, message }
 }
