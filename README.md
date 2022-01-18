@@ -2,9 +2,7 @@
 
 Privacy focused web analytics middleware for [express.js](https://expressjs.com/). Records web site/app statistics w/out compromising user privacy. No tracking && no sharing data w/big tech.
 
-**--- !!! --- !!! --- !!! --- !!! --- !!! ---**
-**WORK IN PROGRESS --- THIS IS NOT FINISHED**
-**--- !!! --- !!! --- !!! --- !!! --- !!! ---**
+![stats-not-tracks screen recording](snt.gif)
 
 # Why
 
@@ -78,7 +76,7 @@ ANALYTICS.setup(app, {
 })
 ```
 
-In the example above the `admin` property is set to `true`, which means we've exposed routes for the REST API as well as the default client-side admin dashboard. This is served publicly by default, meaning anyone witch access to this app/site could visit `https://[YOUR_SITE]/stats-not-tracks` as well as request data from the api `https://[YOUR_SITE]/snt-api/data/hits`. That said, you can edit these && other admin defaults by passing an optional config object to the `admin` property instead of a boolean.
+In the example above the `admin` property is set to `true`, which means we've exposed routes for the REST API as well as the default client-side admin dashboard. This is served publicly by default, meaning anyone with access to this app/site could visit `https://[YOUR_SITE]/stats-not-tracks` as well as request data from the api `https://[YOUR_SITE]/snt-api/data/hits`. That said, you can edit these && other admin defaults by passing an optional config object to the `admin` property instead of a boolean.
 
 ```js
 ANALYTICS.setup(app, {
