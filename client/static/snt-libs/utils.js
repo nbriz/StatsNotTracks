@@ -146,6 +146,14 @@ window.SNT = {
     return { pages, cal, total, referrals, devices, systems, clients }
   },
 
+  filterViews: (dict, txt) => {
+    const obj = {}
+    for (const key in dict) {
+      if (!key.includes(txt)) obj[key] = dict[key]
+    }
+    return obj
+  },
+
   /*
     const json = await SNT.getData()
     const avgTimes = SNT.avgTimes(json.dict)

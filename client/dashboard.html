@@ -267,9 +267,10 @@
         SNT.chartViews(canvas, range, views.cal)
 
         // CREATE DATA ROWS
+        const refs = SNT.filterViews(views.referrals, '/nickbriz.')
         const stats = [
           { parent: '#pages', data: views.pages },
-          { parent: '#referrals', data: views.referrals },
+          { parent: '#referrals', data: refs },
           { parent: '#devices', data: SNT.tallyStats(views.devices) },
           { parent: '#systems', data: SNT.tallyStats(views.systems) },
           { parent: '#clients', data: SNT.tallyStats(views.clients) },
