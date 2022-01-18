@@ -54,13 +54,13 @@ const setup = (app, o) => {
 }
 
 const live = (server, io) => {
+  const utils = require('./js/utils.js')
   io = (io && io.httpServer) ? io : require('socket.io')(server)
   process.env.SNT_LIVE_STATS = true
   io.on('connection', (socket) => {
-    io.emit('snt-connection', io.sockets.sockets.size)
-    socket.on('disconnect', () => {
-      io.emit('snt-connection', io.sockets.sockets.size)
-    })
+    utils.sendSocketData2Admin('snt-connection', io, socket)
+    socket.on('disconnect', () => utils.sendSocketData2Admin('snt-connection', io, socket))
+    socket.on('snt-req-update', () => utils.sendSocketData2Admin('snt-res-update', io, socket))
   })
 }
 

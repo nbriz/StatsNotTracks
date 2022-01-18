@@ -136,6 +136,33 @@
         update(query, id, text)
       }
 
+      function setupLiveStats () {
+        let socket
+        const modal = $('snt-modal')
+        const updateM = (d) => modal.update({ type: 'live-stats', live: d })
+        if (typeof window.io === 'function') {
+          socket = new io()
+          modal.setLiveSocket(socket)
+          socket.on('snt-connection', (data) => {
+            data = data.filter(s => s.id !== socket.id)
+            $('#live').textContent = data.length
+            const div = modal.children[1]
+            if (div && div.style.display === 'block') updateM(data)
+          })
+          socket.on('snt-res-update', (data) => updateM(data))
+        }
+        $('#live').on('click', () => {
+          if (typeof window.io === 'function') {
+            socket.emit('snt-req-update')
+          } else {
+            modal.update({
+              title: 'Live Visitors',
+              html: 'you do not have <a href="https://github.com/nbriz/StatsNotTracks#server-side-api" target="_blank">live stats</a> enabled.'
+            })
+          }
+        })
+      }
+
       // -----------------------------------------------------------------------
       // --------------------------------------------- SETUP + UPDATE ----------
       // -----------------------------------------------------------------------
@@ -147,12 +174,7 @@
         $('#time-range-from').value = SNT.date2str(y)
         $('#time-range-to').value = SNT.date2str(t)
 
-        if (typeof window.io === 'function') {
-          window.io().on('snt-connection', (num) => {
-            // -1, dont't include this connection
-            $('#live').textContent = num - 1
-          })
-        }
+        setupLiveStats()
 
         const height = $('header').offsetHeight + $('nav').offsetHeight
         $('#chart').style.height = `calc(35% - ${height / 2}px)`

@@ -29,6 +29,10 @@ class SNTModal extends window.HTMLElement {
     this.render(nfo)
   }
 
+  setLiveSocket (socket) {
+    this.socket = socket
+  }
+
   render (nfo) {
     const modalInfo = (nfo && nfo.html)
       ? nfo.html : (nfo && nfo.data)
@@ -91,7 +95,8 @@ class SNTModal extends window.HTMLElement {
 
         .snt-grd3 { grid-template-columns: 1fr 1fr 1fr; }
         .snt-grd4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
-        .snt-grd5 { grid-template-columns: 1fr 1fr 1fr 1fr 1.5fr; }
+        .snt-grd5 { grid-template-columns: 1fr 1fr 1fr 1fr 1fr; }
+        .snt-grd5p { grid-template-columns: 1fr 1fr 1fr 1fr 1.5fr; }
         .no-border { border: none !important; }
 
         .snt-modal-row-details {
@@ -140,11 +145,11 @@ class SNTModal extends window.HTMLElement {
       if (nfo.data) this.data = Object.keys(nfo.data).map(hash => nfo.data[hash])
 
       if (nfo.type === 'page-actions') {
-        this.querySelector('.snt-modal-header > span').textContent = 'PAGE ACTIONS'
         setTimeout(() => this.handleActions(this.data), 100)
       } else if (nfo.type === 'locations') {
-        this.querySelector('.snt-modal-header > span').textContent = 'VISITOR LOCATIONS'
         setTimeout(() => this.handleLocations(this.data), 100)
+      } else if (nfo.type === 'live-stats') {
+        setTimeout(() => this.handleLiveStats(nfo.live), 100)
       } else SNT.loading(false)
     } else SNT.loading(false)
   }
@@ -152,6 +157,30 @@ class SNTModal extends window.HTMLElement {
   // ----------------------------------------------------------------- >>>>>>>>>
   // ----------------------------------------------------------------- >>>>>>>>>
   // ----------------------------------------------------------------- >>>>>>>>>
+  handleLiveStats (data) {
+    data = data.filter(s => s.id !== this.socket.id)
+    const header = this.querySelector('.snt-modal-header > span')
+    header.innerHTML = `Live Visitors: ${data.length}`
+    const nfo = this.querySelector('.snt-modal-info')
+    if (data.length === 0) {
+      nfo.innerHTML = 'No liver visitors currently on the site.'
+    } else {
+      data.forEach(v => {
+        nfo.innerHTML += `
+          <div class="snt-modal-row snt-grd5">
+            <b>${v.id}</b>
+            <b>${v.url}</b>
+            <b>
+              <a href="https://ip-api.com/${v.ip}" target="_blank">location</a>
+            </b>
+            <b>${v.device} (${v.model})</b>
+            <b>${v.os} (${v.client})</b>
+          </div>
+        `
+      })
+    }
+    SNT.loading(false)
+  }
 
   handleLocations (data) {
     data = JSON.parse(JSON.stringify(data))
@@ -259,7 +288,7 @@ class SNTModal extends window.HTMLElement {
         </div>`
       })
       nfo.innerHTML += `
-        <div class="snt-modal-row snt-grd5">
+        <div class="snt-modal-row snt-grd5p">
           <b>
             #${v.id}
             <span class="toggle these-acts" data-id="${v.id}">(<b>▶</b> ${v.hits.length})</span>
@@ -316,7 +345,7 @@ class SNTModal extends window.HTMLElement {
         <span><b>${h.action}</b> <code>${h.payload}</code></span>
       </div>`
     })
-    nfo.innerHTML = `<div class="snt-modal-row snt-grd5 snt-highlight">
+    nfo.innerHTML = `<div class="snt-modal-row snt-grd5p snt-highlight">
       <b>#${v.id}</b>
       <b>${v.model === 'Other' ? v.device : `${v.device} (${v.model})`}</b>
       <b>${v.os}</b>
