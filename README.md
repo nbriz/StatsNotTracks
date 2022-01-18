@@ -1,6 +1,6 @@
 # StatsNotTracks
 
-Privacy focused web analytics middleware for [express.js](https://expressjs.com/). Records web site/app statistics w/out compromising user privacy. No tracking && no sharing data w/big tech.
+Privacy focused web analytics middleware for [express.js](https://expressjs.com/). Records web site/app statistics w/out compromising user privacy. No tracking across sites && no sharing data with big tech.
 
 ![stats-not-tracks screen recording](snt.gif)
 
