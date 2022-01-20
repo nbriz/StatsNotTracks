@@ -43,11 +43,11 @@ class SNTModal extends window.HTMLElement {
         .snt-modal-wrapper {
           width: 100vw;
           height: 100vh;
-          background: ${this.bgColor || '#000b'};
+          background: ${this.getAttribute('bgColor') || '#000b'};
           position: absolute;
           top: 0;
           left: 0;
-          z-index: ${this.getAttribute('z-index') || '100'};
+          z-index: ${this.getAttribute('zIndex') || '100'};
           padding: 5vw;
           display: none;
         }
