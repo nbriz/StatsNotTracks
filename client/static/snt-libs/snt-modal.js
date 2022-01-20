@@ -12,7 +12,7 @@ class SNTModal extends window.HTMLElement {
 
   // declare any attributes you want to listen for changes to
   static get observedAttributes () {
-    return ['zIndex']
+    return ['zIndex', 'bgColor']
   }
 
   attributeChangedCallback (attrName, oldVal, newVal) {
@@ -43,7 +43,7 @@ class SNTModal extends window.HTMLElement {
         .snt-modal-wrapper {
           width: 100vw;
           height: 100vh;
-          background: #000b;
+          background: ${this.bgColor || '#000b'};
           position: absolute;
           top: 0;
           left: 0;
