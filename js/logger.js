@@ -41,6 +41,7 @@ router.post('/snt-api/hit', async (req, res) => {
   // let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
   let ip = req.connection.remoteAddress
   ip = ip.includes('ffff:') ? ip.split('ffff:')[1] : ip
+  ip = (ip === '127.0.0.1' && req.headers['x-real-ip']) ? req.headers['x-real-ip'] : ip
   const uniqueVisitor = ip + req.headers['user-agent']
   const saltfile = await utils.getSalt()
   const uvHash = await bcrypt.hash(uniqueVisitor, saltfile.salt)

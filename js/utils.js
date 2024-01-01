@@ -86,7 +86,10 @@ async function sendSocketData2Admin (eve, io, socket) {
   io.sockets.sockets.forEach(async s => {
     const isAdmin = await checkSocketToken(s)
     if (isAdmin) adminID = s.id
-    const ip = s.conn.remoteAddress
+    let ip = s.conn.remoteAddress
+    ip = ip.includes('ffff:') ? ip.split('ffff:')[1] : ip
+    const realIP = s.handshake.headers['x-real-ip']
+    ip = (ip === '127.0.0.1' && realIP) ? realIP : ip
     const dev = device(s.handshake.headers['user-agent'], { parseUserAgent: true })
     const software = dev.parser.useragent
     const app2str = (d) => `${d.family}.${d.major}.${d.minor}.${d.patch}`
@@ -97,7 +100,7 @@ async function sendSocketData2Admin (eve, io, socket) {
       client: app2str(software),
       os: app2str(software.os),
       url: s.handshake.headers.referer,
-      ip: ip.includes('ffff:') ? ip.split('ffff:')[1] : ip
+      ip: ip
     })
 
     count++
